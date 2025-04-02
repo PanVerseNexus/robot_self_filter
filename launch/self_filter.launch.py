@@ -5,8 +5,37 @@ from launch.actions import DeclareLaunchArgument, LogInfo
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
+from ament_index_python.packages import get_package_share_directory
+
+import xacro
+import re
+
+def remove_comments(text):
+    pattern = r'<!--(.*?)-->'
+    return re.sub(pattern, '', text, flags=re.DOTALL)
 
 def generate_launch_description():
+    
+
+    package_name1 = 'example_description'  # 替换为您的包名
+    package_dir1 = get_package_share_directory(package_name1)
+    
+    package_name2 = 'filter'  # 替换为您的包名
+    
+    package_dir2 = get_package_share_directory(package_name2)
+
+    default_filter_config = os.path.join(package_dir2, 'params', 'self_filter.yaml')
+    
+    default_urdf_path = os.path.join(package_dir1, 'urdf', 'example.xacro')  # 替换为您的URDF文件
+    
+ 
+    xacro_file = default_urdf_path
+    doc = xacro.parse(open(xacro_file))
+    xacro.process_doc(doc)
+    
+    robot_description_content = doc.toxml()
+    
+    
     description_name_arg = DeclareLaunchArgument(
         'description_name',
         default_value='/robot_description'
@@ -17,21 +46,23 @@ def generate_launch_description():
     )
     lidar_sensor_type_arg = DeclareLaunchArgument(
         'lidar_sensor_type',
-        default_value='2'
+        default_value='0' #根据激光雷达类型调整   0: 为标准PointCloud2格式
     )
     in_pointcloud_topic_arg = DeclareLaunchArgument(
         'in_pointcloud_topic',
-        default_value='/cloud_in'
+        default_value='/cloud_in' # 修改为自己的点云话题
     )
     out_pointcloud_topic_arg = DeclareLaunchArgument(
         'out_pointcloud_topic',
-        default_value='/cloud_out'
+        default_value='/cloud_out'  # 修改为自己期望的输出话题
     )
     robot_description_arg = DeclareLaunchArgument(
-        'robot_description'
+        'robot_description',
+        default_value=robot_description_content
     )
     filter_config_arg = DeclareLaunchArgument(
-        'filter_config'
+        'filter_config',
+        default_value=default_filter_config
     )
 
     # Create a log action to print the config
@@ -51,7 +82,7 @@ def generate_launch_description():
                     value_type=str
                 ),
                 'zero_for_removed_points': LaunchConfiguration('zero_for_removed_points'),
-                'use_sim_time': True
+                'use_sim_time': True # 如果使用仿真时间，请设置为True
             }
         ],
         remappings=[

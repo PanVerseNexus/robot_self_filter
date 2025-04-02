@@ -1,5 +1,5 @@
 # ============================ filter_improved.yaml ============================
-self_filter_ouster_horizontal:
+self_filter:
   ros__parameters:
     sensor_frame: "Lidar"
 
